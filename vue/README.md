@@ -93,5 +93,35 @@ beforeRouteEnter不能访问this，但是可以吧组件实力作为回调函数
 
 导航守卫仅仅应用在路由的跳转目标上，如果对路由a添加导航守卫，但是a却重定向到了b，那么不会触发路由守卫。
 
-vue-router默认hash模式，使用URL的hash来模拟一个完整的URL，于是当URL改变时，页面不会重新加载。（有#号的是hash，否则是history）
+vue-router默认hash模式，使用URL的hash来模拟一个完整的URL，于是当URL改变时，页面不会重新加载。（有#号的是hash，否则是history）。
+history模式下，如果后端对路由缺少解析，那么就容易返回404，所以就需要在服务器端增加一个资源不存在的候选资源。
 
+hash模式下仅hash符号之前的内容会被包含在请求中。
+
+
+## vuex
+
+##### mutations
+mutations的参数是state和payload
+
+##### actions
+这是store的根对象
+actions接收一个与store实例具有相同方法和属性的context对象，但是却并不是store实例本身
+
+分发形式如下：
+```
+// 以载荷形式分发
+store.dispatch('incrementAsync', {
+  amount: 10
+})
+
+// 以对象形式分发
+store.dispatch({
+  type: 'incrementAsync',
+  amount: 10
+})
+```
+
+##### module
+对于模块局部的mutation和getter，接受的第一个参数是模块局部的状态对象，即state
+而actions的context包括了state，commit，rootState三个属性

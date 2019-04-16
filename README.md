@@ -5,3 +5,5 @@
 - [vue](https://github.com/qibing147147/learning-notes/tree/master/vue)
 - [webpack](https://github.com/qibing147147/learning-notes/tree/master/webpack)
 - - [自己实现的webpack](https://github.com/qibing147147/learning-notes/tree/master/webpack/手写webpack)
+- [计算机网络](https://github.com/qibing147147/learning-notes/tree/master/computernetwork)
+- - [https](https://github.com/qibing147147/learning-notes/tree/master/computernetwork/https)

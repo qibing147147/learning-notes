@@ -3,6 +3,7 @@
 - [js](https://github.com/qibing147147/learning-notes/tree/master/js)
 - - [原型，原型链](https://github.com/qibing147147/learning-notes/tree/master/js/原型，原型链)
 - [vue](https://github.com/qibing147147/learning-notes/tree/master/vue)
+- - [双向绑定原理](https://github.com/qibing147147/learning-notes/tree/master/vue/双向绑定)
 - [webpack](https://github.com/qibing147147/learning-notes/tree/master/webpack)
 - - [自己实现的webpack](https://github.com/qibing147147/learning-notes/tree/master/webpack/手写webpack)
 - [计算机网络](https://github.com/qibing147147/learning-notes/tree/master/computernetwork)

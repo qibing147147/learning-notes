@@ -193,3 +193,124 @@ addEventListener注册事件的第三个参数可以是布尔值或者对象。�
 - capture：布尔值，和 useCapture 作用一样
 - once：布尔值，值为 true 表示该回调只会调用一次，调用后会移除监听
 - passive：布尔值，表示永远不会调用 preventDefault
+
+##### 事件代理
+给父元素绑定点击事件，然后使用event.target获取目标元素。
+
+#### 跨域
+
+如果协议，域名和端口有一个不同就会出现跨域问题。
+
+为了防止csrf攻击，csrf攻击就是利用用户的登录态发起恶意请求。
+
+跨域是拦截了响应，而不是拦截请求，请求其实是发出去了的。
+
+#### 跨域解决方案
+
+##### jsonp
+
+jsonp的原理是利用script标签没有跨域限制的漏洞。通过script标签指向一个需要访问的地址并提供一个回调函数来接受数据当需要通讯时。jsonp使用简单且兼容性不错，但是只限于get请求。
+
+##### CORS（跨域资源共享）
+
+CORS 需要浏览器和后端同时支持。IE 8 和 9 需要通过 XDomainRequest 来实现。
+
+浏览器会自动进行 CORS 通信，实现 CORS 通信的关键是后端。只要后端实现了 CORS，就实现了跨域。
+
+服务端设置 Access-Control-Allow-Origin 就可以开启 CORS。 该属性表示哪些域名可以访问资源，如果设置通配符则表示所有网站都可以访问资源。
+
+虽然设置 CORS 和前端没什么关系，但是通过这种方式解决跨域问题的话，会在发送请求时出现两种情况，分别为简单请求和复杂请求。
+
+###### 简单请求
+以 Ajax 为例，当满足以下条件时，会触发简单请求
+
+1. 使用下列方法之一：
+
+- GET
+
+- HEAD
+
+- POST
+
+2. Content-Type 的值仅限于下列三者之一：
+
+- text/plain
+
+- multipart/form-data
+
+- application/x-www-form-urlencoded
+
+请求中的任意 XMLHttpRequestUpload 对象均没有注册任何事件监听器； XMLHttpRequestUpload 对象可以使用 XMLHttpRequest.upload 属性访问。
+
+###### 复杂请求
+
+那么很显然，不符合以上条件的请求就肯定是复杂请求了。
+
+对于复杂请求来说，首先会发起一个预检请求，该请求是 option 方法的，通过该请求来知道服务端是否允许跨域请求。
+
+对于预检请求来说，如果你使用过 Node 来设置 CORS 的话，可能会遇到过这么一个坑。
+
+以下以 express 框架举例：
+
+```
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS')
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Credentials'
+  )
+  next()
+})
+```
+
+该请求会验证你的 Authorization 字段，没有的话就会报错。
+
+当前端发起了复杂请求后，你会发现就算你代码是正确的，返回结果也永远是报错的。因为预检请求也会进入回调中，也会触发 next 方法，因为预检请求并不包含 Authorization 字段，所以服务端会报错。
+
+想解决这个问题很简单，只需要在回调中过滤 option 方法即可
+
+```
+res.statusCode = 204
+res.setHeader('Content-Length', '0')
+res.end()
+```
+
+##### document.domain
+
+如果二级域名相同，就可以给页面添加document.domain 表示二级域名相同实现跨域。
+
+##### postMessage
+
+这种方式通常用于获取嵌入页面中的第三方页面数据。一个页面发送消息，另一个页面判断来源并接收消息；
+
+```
+// 发送消息端
+window.parent.postMessage('message', 'http://test.com')
+// 接收消息端
+var mc = new MessageChannel()
+mc.addEventListener('message', event => {
+  var origin = event.origin || event.originalEvent.origin
+  if (origin === 'http://test.com') {
+    console.log('验证通过')
+  }
+})
+```
+
+#### 浏览器存储功能
+
+cookie localStorage sessionStorage indexDB
+
+
+
+**特性** | **cookie** | **localStorage** |	**sessionStorage** |	**indexDB**
+---|---|---|---|---
+数据生命周期	 | 一般由服务器生成，可以设置过期时间 |	除非被清理，否则一直存在	 | 页面关闭就清理 | 	除非被清理，否则一直存在
+数据存储大小	 | 4K | 5M | 	5M |	无限
+与服务端通信 | 	每次都会携带在 header 中，对于请求性能影响 | 	不参与 | 不参与 | 不参与
+
+特性 | cookie | localStorage | sessionStorage | indexDB
+---|---|---|---|---
+数据生命周期	 | 一般由服务器生成，可以设置过期时间 |	除非被清理，否则一直存在	 | 页面关闭就清理 | 	除非被清理，否则一直存在
+数据存储大小	 | 4K | 5M | 	5M |	无限
+与服务端通信 | 	每次都会携带在 header 中，对于请求性能影响 | 	不参与 | 不参与 | 不参与

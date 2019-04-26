@@ -3,7 +3,7 @@
 
 ##### 关于+运算
 
-```Javascript
+```javascript
 'a' + + 'b' // -> "aNaN"
 ```
 因为+ 'b'等于NaN，所以结果为"aNaN"

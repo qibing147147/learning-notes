@@ -947,3 +947,403 @@ React 需要使用 JSX，有一定的上手成本，并且需要一整套的工�
 在生态上来说，两者其实没多大的差距，当然 React 的用户是远远高于 Vue 的。
 
 在上手成本上来说，Vue 一开始的定位就是尽可能的降低前端开发的门槛，然而 React 更多的是去改变用户去接受它的概念和思想，相较于 Vue 来说上手成本略高。
+
+### vue常考知识点
+
+#### 生命周期函数
+
+在 beforeCreate 钩子函数调用的时候，是获取不到 props 或者 data 中的数据的，因为这些数据的初始化都在 initState 中。
+
+然后会执行 created 钩子函数，在这一步的时候已经可以访问到之前不能访问到的数据，但是这时候组件还没被挂载，所以是看不到的。
+
+接下来会先执行 beforeMount 钩子函数，开始创建 VDOM，最后执行 mounted 钩子，并将 VDOM 渲染为真实 DOM 并且渲染数据。组件中如果有子组件的话，会递归挂载子组件，只有当所有子组件全部挂载完毕，才会执行根组件的挂载钩子。
+
+接下来是数据更新时会调用的钩子函数 beforeUpdate 和 updated，这两个钩子函数没什么好说的，就是分别在数据更新前和更新后会调用。
+
+另外还有 keep-alive 独有的生命周期，分别为 activated 和 deactivated 。用 keep-alive 包裹的组件在切换时不会进行销毁，而是缓存到内存中并执行 deactivated 钩子函数，命中缓存渲染后会执行 actived 钩子函数。
+
+最后就是销毁组件的钩子函数 beforeDestroy 和 destroyed。前者适合移除事件、定时器等等，否则可能会引起内存泄露的问题。然后进行一系列的销毁操作，如果有子组件的话，也会递归销毁子组件，所有子组件都销毁完毕后才会执行根组件的 destroyed 钩子函数。
+
+##### 父子通信
+
+父组件通过 props 传递数据给子组件，子组件通过 emit 发送事件传递数据给父组件，这两种方式是最常用的父子通信实现办法。
+
+这种父子通信方式也就是典型的单向数据流，父组件通过 props 传递数据，子组件不能直接修改 props， 而是必须通过发送事件的方式告知父组件修改数据。
+
+另外这两种方式还可以使用语法糖 v-model 来直接实现，因为 v-model 默认会解析成名为 value 的 prop 和名为 input 的事件。这种语法糖的方式是典型的双向绑定，常用于 UI 控件上，但是究其根本，还是通过事件的方法让父组件修改数据。
+
+当然我们还可以通过访问 $parent 或者 $children 对象来访问组件实例中的方法和数据。
+
+另外如果你使用 Vue 2.3 及以上版本的话还可以使用 $listeners 和 .sync 这两个属性。
+
+$listeners 属性会将父组件中的 (不含 .native 修饰器的) v-on 事件监听器传递给子组件，子组件可以通过访问 $listeners 来自定义监听器。
+
+##### 兄弟组件通信
+
+对于这种情况可以通过查找父组件中的子组件实现，也就是 this.$parent.$children，在 $children 中可以通过组件 name 查询到需要的组件实例，然后进行通信。
+
+##### 跨多层次组件通信
+
+对于这种情况可以使用 Vue 2.2 新增的 API provide / inject，虽然文档中不推荐直接使用在业务中，但是如果用得好的话还是很有用的。
+
+假设有父组件 A，然后有一个跨多层级的子组件 B
+
+```
+// 父组件 A
+export default {
+  provide: {
+    data: 1
+  }
+}
+// 子组件 B
+export default {
+  inject: ['data'],
+  mounted() {
+    // 无论跨几层都能获得父组件的 data 属性
+    console.log(this.data) // => 1
+  }
+}
+```
+
+#### extend
+
+这个 API 很少用到，作用是扩展组件生成一个构造器，通常会与 $mount 一起使用。
+
+```
+// 创建组件构造器
+let Component = Vue.extend({
+  template: '<div>test</div>'
+})
+// 挂载到 #app 上
+new Component().$mount('#app')
+// 除了上面的方式，还可以用来扩展已有的组件
+let SuperComponent = Vue.extend(Component)
+new SuperComponent({
+    created() {
+        console.log(1)
+    }
+})
+new SuperComponent().$mount('#app')
+```
+
+#### mixin和mixins的区别
+
+mixin 用于全局混入，会影响到每个组件实例，通常插件都是这样做初始化的。
+
+虽然文档不建议我们在应用中直接使用 mixin，但是如果不滥用的话也是很有帮助的，比如可以全局混入封装好的 ajax 或者一些工具函数等等。
+
+mixins 应该是我们最常使用的扩展组件的方式了。如果多个组件中有相同的业务逻辑，就可以将这些逻辑剥离出来，通过 mixins 混入代码，比如上拉下拉加载数据这种逻辑等等。
+
+另外需要注意的是 mixins 混入的钩子函数会先于组件内的钩子函数执行，并且在遇到同名选项的时候也会有选择性的进行合并。
+
+#### computed和watch区别
+
+computed 是计算属性，依赖其他属性计算值，并且 computed 的值有缓存，只有当计算值变化才会返回内容。
+
+watch 监听到值的变化就会执行回调，在回调中可以进行一些逻辑操作。
+
+所以一般来说需要依赖别的属性来动态获得值的时候可以使用 computed，对于监听到值的变化需要做一些复杂业务逻辑的情况可以使用 watch。
+
+另外 computed 和 watch 还都支持对象的写法，这种方式知道的人并不多。
+
+```
+vm.$watch('obj', {
+    // 深度遍历
+    deep: true,
+    // 立即触发
+    immediate: true,
+    // 执行的函数
+    handler: function(val, oldVal) {}
+})
+var vm = new Vue({
+  data: { a: 1 },
+  computed: {
+    aPlus: {
+      // this.aPlus 时触发
+      get: function () {
+        return this.a + 1
+      },
+      // this.aPlus = 1 时触发
+      set: function (v) {
+        this.a = v - 1
+      }
+    }
+  }
+})
+```
+
+#### keep-alive作用
+
+如果你需要在组件切换的时候，保存一些组件的状态防止多次渲染，就可以使用 keep-alive 组件包裹需要保存的组件。
+
+对于 keep-alive 组件来说，它拥有两个独有的生命周期钩子函数，分别为 activated 和 deactivated 。用 keep-alive 包裹的组件在切换时不会进行销毁，而是缓存到内存中并执行 deactivated 钩子函数，命中缓存渲染后会执行 actived 钩子函数。
+
+#### v-show与v-if的区别
+
+v-show 只是在 display: none 和 display: block 之间切换。无论初始条件是什么都会被渲染出来，后面只需要切换 CSS，DOM 还是一直保留着的。所以总的来说 v-show 在初始渲染时有更高的开销，但是切换开销很小，更适合于频繁切换的场景。
+
+v-if 的话就得说到 Vue 底层的编译了。当属性初始为 false 时，组件就不会被渲染，直到条件为 true，并且切换条件时会触发销毁/挂载组件，所以总的来说在切换时开销更高，更适合不经常切换的场景。
+
+并且基于 v-if 的这种惰性渲染机制，可以在必要的时候才去渲染组件，减少整个页面的初始渲染开销。
+
+#### 组件中 data 什么时候可以使用对象
+
+
+组件复用时所有组件实例都会共享 data，如果 data 是对象的话，就会造成一个组件修改 data 以后会影响到其他所有组件，所以需要将 data 写成函数，每次用到就调用一次函数获得新的数据。
+
+当我们使用 new Vue() 的方式的时候，无论我们将 data 设置为对象还是函数都是可以的，因为 new Vue() 的方式是生成一个根组件，该组件不会复用，也就不存在共享 data 的情况了。
+
+#### Object.defineProperty的缺陷
+
+如果通过下标方式修改数组数据或者给对象新增属性并不会触发组件的重新渲染，因为 Object.defineProperty 不能拦截到这些操作，更精确的来说，对于数组而言，大部分操作都是拦截不到的，只是 Vue 内部通过重写函数的方式解决了这个问题。
+
+对于第一个问题，Vue 提供了一个 API 解决
+
+```
+export function set (target: Array<any> | Object, key: any, val: any): any {
+  // 判断是否为数组且下标是否有效
+  if (Array.isArray(target) && isValidArrayIndex(key)) {
+    // 调用 splice 函数触发派发更新
+    // 该函数已被重写
+    target.length = Math.max(target.length, key)
+    target.splice(key, 1, val)
+    return val
+  }
+  // 判断 key 是否已经存在
+  if (key in target && !(key in Object.prototype)) {
+    target[key] = val
+    return val
+  }
+  const ob = (target: any).__ob__
+  // 如果对象不是响应式对象，就赋值返回
+  if (!ob) {
+    target[key] = val
+    return val
+  }
+  // 进行双向绑定
+  defineReactive(ob.value, key, val)
+  // 手动派发更新
+  ob.dep.notify()
+  return val
+}
+```
+
+对于数组而言，Vue 内部重写了以下函数实现派发更新
+
+```
+// 获得数组原型
+const arrayProto = Array.prototype
+export const arrayMethods = Object.create(arrayProto)
+// 重写以下函数
+const methodsToPatch = [
+  'push',
+  'pop',
+  'shift',
+  'unshift',
+  'splice',
+  'sort',
+  'reverse'
+]
+methodsToPatch.forEach(function (method) {
+  // 缓存原生函数
+  const original = arrayProto[method]
+  // 重写函数
+  def(arrayMethods, method, function mutator (...args) {
+  // 先调用原生函数获得结果
+    const result = original.apply(this, args)
+    const ob = this.__ob__
+    let inserted
+    // 调用以下几个函数时，监听新数据
+    switch (method) {
+      case 'push':
+      case 'unshift':
+        inserted = args
+        break
+      case 'splice':
+        inserted = args.slice(2)
+        break
+    }
+    if (inserted) ob.observeArray(inserted)
+    // 手动派发更新
+    ob.dep.notify()
+    return result
+  })
+})
+```
+
+#### 编译过程
+
+首先直接把模板丢到浏览器中肯定是不能运行的，模板只是为了方便开发者进行开发。Vue 会通过编译器将模板通过几个阶段最终编译为 render 函数，然后通过执行 render 函数生成 Virtual DOM 最终映射为真实 DOM。
+
+接下来我们就来学习这个编译的过程，了解这个过程中大概发生了什么事情。这个过程其中又分为三个阶段，分别为：
+
+1. 将模板解析为 AST
+2. 优化 AST
+3. 将 AST 转换为 render 函数
+在第一个阶段中，最主要的事情还是通过各种各样的正则表达式去匹配模板中的内容，然后将内容提取出来做各种逻辑操作，接下来会生成一个最基本的 AST 对象
+
+然后会根据这个最基本的 AST 对象中的属性，进一步扩展 AST。
+
+当然在这一阶段中，还会进行其他的一些判断逻辑。比如说对比前后开闭标签是否一致，判断根组件是否只存在一个，判断是否符合 HTML5 Content Model 规范等等问题。
+
+接下来就是优化 AST 的阶段。在当前版本下，Vue 进行的优化内容其实还是不多的。只是对节点进行了静态内容提取，也就是将永远不会变动的节点提取了出来，实现复用 Virtual DOM，跳过对比算法的功能。在下一个大版本中，Vue 会在优化 AST 的阶段继续发力，实现更多的优化功能，尽可能的在编译阶段压榨更多的性能，比如说提取静态的属性等等优化行为。
+
+最后一个阶段就是通过 AST 生成 render 函数了。其实这一阶段虽然分支有很多，但是最主要的目的就是遍历整个 AST，根据不同的条件生成不同的代码罢了。
+
+
+#### NextTick原理分析
+
+nextTick 可以让我们在下次 DOM 更新循环结束之后执行延迟回调，用于获得更新后的 DOM。
+
+在 Vue 2.4 之前都是使用的 microtasks，但是 microtasks 的优先级过高，在某些情况下可能会出现比事件冒泡更快的情况，但如果都使用 macrotasks 又可能会出现渲染的性能问题。所以在新版本中，会默认使用 microtasks，但在特殊情况下会使用 macrotasks，比如 v-on。
+
+对于实现 macrotasks ，会先判断是否能使用 setImmediate ，不能的话降级为 MessageChannel ，以上都不行的话就使用 setTimeout
+
+```
+if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {
+  macroTimerFunc = () => {
+    setImmediate(flushCallbacks)
+  }
+} else if (
+  typeof MessageChannel !== 'undefined' &&
+  (isNative(MessageChannel) ||
+    // PhantomJS
+    MessageChannel.toString() === '[object MessageChannelConstructor]')
+) {
+  const channel = new MessageChannel()
+  const port = channel.port2
+  channel.port1.onmessage = flushCallbacks
+  macroTimerFunc = () => {
+    port.postMessage(1)
+  }
+} else {
+  macroTimerFunc = () => {
+    setTimeout(flushCallbacks, 0)
+  }
+}
+```
+
+
+#### TCP和UDP的区别
+
+首先 UDP 协议是面向无连接的，也就是说不需要在正式传递数据之前先连接起双方。然后 UDP 协议只是数据报文的搬运工，不保证有序且不丢失的传递到对端，并且UDP 协议也没有任何控制流量的算法，总的来说 UDP 相较于 TCP 更加的轻便。
+
+TCP 基本是和 UDP 反着来，建立连接断开连接都需要先需要进行握手。在传输数据的过程中，通过各种算法保证数据的可靠性，当然带来的问题就是相比 UDP 来说不那么的高效。
+
+对于 TCP 头部来说，以下几个字段是很重要的
+
+- Sequence number，这个序号保证了 TCP 传输的报文都是有序的，对端可以通过序号顺序的拼接报文
+- Acknowledgement Number，这个序号表示数据接收端期望接收的下一个字节的编号是多少，同时也表示上一个序号的数据已经收到
+- Window Size，窗口大小，表示还能接收多少字节的数据，用于流量控制
+- 标识符
+   - URG=1：该字段为一表示本数据报的数据部分包含紧急信息，是一个高优先级数据报文，此时紧急指针有效。紧急数据一定位于当前数据包数据部分的最前面，紧急指针标明了紧急数据的尾部。
+   - ACK=1：该字段为一表示确认号字段有效。此外，TCP 还规定在连接建立后传送的所有报文段都必须把 ACK 置为一。
+   - PSH=1：该字段为一表示接收端应该立即将数据 push 给应用层，而不是等到缓冲区满后再提交。
+   - RST=1：该字段为一表示当前 TCP 连接出现严重问题，可能需要重新建立 TCP 连接，也可以用于拒绝非法的报文段和拒绝连接请求。
+   - SYN=1：当SYN=1，ACK=0时，表示当前报文段是一个连接请求报文。当SYN=1，ACK=1时，表示当前报文段是一个同意建立连接的应答报文。
+   - FIN=1：该字段为一表示此报文段是一个释放连接的请求报文。
+
+##### TCP连接的三次握手
+
+1. 客户端向服务端发送连接请求报文段。该报文段中包含自身的数据通讯初始序号。请求发送后，客户端便进入 SYN-SENT 状态。
+2. 服务端收到连接请求报文段后，如果同意连接，则会发送一个应答，该应答中也会包含自身的数据通讯初始序号，发送完成后便进入 SYN-RECEIVED 状态。
+3. 当客户端收到连接同意的应答后，还要向服务端发送一个确认报文。客户端发完这个报文段后便进入 ESTABLISHED 状态，服务端收到这个应答后也进入 ESTABLISHED 状态，此时连接建立成功。
+
+##### 断开链接的四次握手
+
+1. 若客户端 A 认为数据发送完成，则它需要向服务端 B 发送连接释放请求。
+2. B 收到连接释放请求后，会告诉应用层要释放 TCP 链接。然后会发送 ACK 包，并进入 CLOSE_WAIT 状态，此时表明 A 到 B 的连接已经释放，不再接收 A 发的数据了。但是因为 TCP 连接是双向的，所以 B 仍旧可以发送数据给 A。
+3. B 如果此时还有没发完的数据会继续发送，完毕后会向 A 发送连接释放请求，然后 B 便进入 LAST-ACK 状态。
+
+PS：通过延迟确认的技术（通常有时间限制，否则对方会误认为需要重传），可以将第二次和第三次握手合并，延迟 ACK 包的发送。
+
+4. A 收到释放请求后，向 B 发送确认应答，此时 A 进入 TIME-WAIT 状态。该状态会持续 2MSL（最大段生存期，指报文段在网络中生存的时间，超时会被抛弃） 时间，若该时间段内没有 B 的重发请求的话，就进入 CLOSED 状态。当 B 收到确认应答后，也便进入 CLOSED 状态。
+
+为什么 A 要进入 TIME-WAIT 状态，等待 2MSL 时间后才进入 CLOSED 状态？
+
+为了保证 B 能收到 A 的确认应答。若 A 发完确认应答后直接进入 CLOSED 状态，如果确认应答因为网络问题一直没有到达，那么会造成 B 不能正常关闭。
+
+#### http请求中的内容
+
+##### 副作用和幂等
+
+副作用指对服务器上的资源做改变，搜索是无副作用的，注册是副作用的。
+
+幂等指发送 M 和 N 次请求（两者不相同且都大于 1），服务器上资源的状态一致，比如注册 10 个和 11 个帐号是不幂等的，对文章进行更改 10 次和 11 次是幂等的。因为前者是多了一个账号（资源），后者只是更新同一个资源。
+
+在规范的应用场景上说，Get 多用于无副作用，幂等的场景，例如搜索关键字。Post 多用于副作用，不幂等的场景，例如注册。
+
+##### 常见状态码
+
+###### 2XX成功
+- 200 OK，表示从客户端发来的请求在服务器端被正确处理
+- 204 No content，表示请求成功，但响应报文不含实体的主体部分
+- 205 Reset Content，表示请求成功，但响应报文不含实体的主体部分，但是与 204 响应不同在于要求请求方重置内容
+- 206 Partial Content，进行范围请求
+
+###### 3XX重定向
+
+- 301 moved permanently，永久性重定向，表示资源已被分配了新的 URL
+- 302 found，临时性重定向，表示资源临时被分配了新的 URL
+- 303 see other，表示资源存在着另一个 URL，应使用 GET 方法获取资源
+- 304 not modified，表示服务器允许访问资源，但因发生请求未满足条件的情况
+- 307 temporary redirect，临时重定向，和302含义类似，但是期望客户端保持请求方法不变向新的地址发出请求
+
+###### 4XX客户端错误
+
+- 400 bad request，请求报文存在语法错误
+- 401 unauthorized，表示发送的请求需要有通过 HTTP 认证的认证信息
+- 403 forbidden，表示对请求资源的访问被服务器拒绝
+- 404 not found，表示在服务器上没有找到请求的资源
+
+###### 5XX服务器错误
+
+- 500 internal sever error，表示服务器端在执行请求时发生了错误
+- 501 Not Implemented，表示服务器不支持当前请求所需要的某个功能
+- 503 service unavailable，表明服务器暂时处于超负载或正在停机维护，无法处理请求
+
+##### TLS
+
+客户端发送一个随机值以及需要的协议和加密方式。
+
+服务端收到客户端的随机值，自己也产生一个随机值，并根据客户端需求的协议和加密方式来使用对应的方式，并且发送自己的证书（如果需要验证客户端证书需要说明）
+
+客户端收到服务端的证书并验证是否有效，验证通过会再生成一个随机值，通过服务端证书的公钥去加密这个随机值并发送给服务端，如果服务端需要验证客户端证书的话会附带证书
+
+服务端收到加密过的随机值并使用私钥解密获得第三个随机值，这时候两端都拥有了三个随机值，可以通过这三个随机值按照之前约定的加密方式生成密钥，接下来的通信就可以通过该密钥来加密解密
+
+通过以上步骤可知，在 TLS 握手阶段，两端使用非对称加密的方式来通信，但是因为非对称加密损耗的性能比对称加密大，所以在正式传输数据时，两端使用对称加密的方式通信。
+
+
+#### http2
+
+HTTP/2 相比于 HTTP/1，可以说是大幅度提高了网页的性能。
+
+在 HTTP/1 中，为了性能考虑，我们会引入雪碧图、将小图内联、使用多个域名等等的方式。这一切都是因为浏览器限制了同一个域名下的请求数量（Chrome 下一般是限制六个连接），当页面中需要请求很多资源的时候，队头阻塞（Head of line blocking）会导致在达到最大请求数量时，剩余的资源需要等待其他资源请求完成后才能发起请求。
+
+在 HTTP/2 中引入了多路复用的技术，这个技术可以只通过一个 TCP 连接就可以传输所有的请求数据。多路复用很好的解决了浏览器限制同一个域名下的请求数量的问题，同时也间接更容易实现全速传输，毕竟新开一个 TCP 连接都需要慢慢提升传输速度。
+
+##### 多路复用
+
+在 HTTP/2 中，有两个非常重要的概念，分别是帧（frame）和流（stream）。
+
+帧代表着最小的数据单位，每个帧会标识出该帧属于哪个流，流也就是多个帧组成的数据流。
+
+多路复用，就是在一个 TCP 连接中可以存在多条流。换句话说，也就是可以发送多个请求，对端可以通过帧中的标识知道属于哪个请求。通过这个技术，可以避免 HTTP 旧版本中的队头阻塞问题，极大的提高传输性能。
+
+- HTTP/2 通过多路复用、二进制流、Header 压缩等等技术，极大地提高了性能，但是还是存在着问题的
+- QUIC 基于 UDP 实现，是 HTTP/3 中的底层支撑协议，该协议基于 UDP，又取了 TCP 中的精华，实现了即快又可靠的协议
+
+#### 两个数不使用四则运算得出和
+
+这道题中可以按位异或，因为按位异或就是不进位加法，8 ^ 8 = 0 如果进位了，就是 16 了，所以我们只需要将两个数进行异或操作，然后进位。那么也就是说两个二进制都是 1 的位置，左边应该有一个进位 1，所以可以得出以下公式 a + b = (a ^ b) + ((a & b) << 1) ，然后通过迭代的方式模拟加法
+
+```
+function sum(a, b) {
+    if (a == 0) return b
+    if (b == 0) return a
+    let newA = a ^ b
+    let newB = (a & b) << 1
+    return sum(newA, newB)
+}
+```

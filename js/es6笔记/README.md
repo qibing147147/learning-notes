@@ -816,14 +816,26 @@ ES5 的继承，实质是先创造子类的实例对象this，然后再将父类
 2. TypedArray视图：共包括 9 种类型的视图，比如Uint8Array（无符号 8 位整数）数组视图, Int16Array（16 位整数）数组视图, Float32Array（32 位浮点数）数组视图等等。
 3. DataView视图：可以自定义复合格式的视图，比如第一个字节是 Uint8（无符号 8 位整数）、第二、三个字节是 Int16（16 位整数）、第四个字节开始是 Float32（32 位浮点数）等等，此外还可以自定义字节序。
 
+TypedArray视图支持的数据类型一共有 9 种（DataView视图支持除Uint8C以外的其他 8 种）。
+
 数据类型	 | 字节长度 | 含义 | 对应的 C 语言类型
 --|--|--|--
 Int8	| 1 |	8 位带符号整数	|signed char
 Uint8	|1|	8| 位不带符号整数	|unsigned char
-Uint8C|	1	|8 位不带符号整数（自动过滤溢出）	|unsigned |char
+Uint8C|	1	|8 位不带符号整数（自动过滤溢出）	|unsigned char
 Int16	|2|	16 位带符号整数	|short
 Uint16|	2|	16 位不带符号整数	|unsigned short
 Int32|	4	|32 位带符号整数	|int
 Uint32	|4	|32 位不带符号的整数|	unsigned int
 Float32|	4|	32 位浮点数|	float
 Float64|	8|	64 位浮点数	|double
+
+
+这 9 个构造函数生成的数组，统称为TypedArray视图。它们很像普通数组，都有length属性，都能用方括号运算符（[]）获取单个元素，所有数组的方法，在它们上面都能使用。普通数组与 TypedArray 数组的差异主要在以下方面。
+
+TypedArray 数组的所有成员，都是同一种类型。
+TypedArray 数组的成员是连续的，不会有空位。
+TypedArray 数组成员的默认值为 0。比如，new Array(10)返回一个普通数组，里面没有任何成员，只是 10 个空位；new Uint8Array(10)返回一个 TypedArray 数组，里面 10 个成员都是 0。
+TypedArray 数组只是一层视图，本身不储存数据，它的数据都储存在底层的ArrayBuffer对象之中，要获取底层对象必须使用buffer属性。
+
+

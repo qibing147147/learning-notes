@@ -4,6 +4,7 @@
 - - [原型，原型链](https://github.com/qibing147147/learning-notes/tree/master/js/原型，原型链)
 - - [js面试题笔记](https://github.com/qibing147147/learning-notes/tree/master/js/js面试题笔记)
 - - [es6笔记](https://github.com/qibing147147/learning-notes/tree/master/js/es6笔记)
+- [js](https://github.com/qibing147147/learning-notes/tree/master/ts)
 - [vue](https://github.com/qibing147147/learning-notes/tree/master/vue)
 - - [双向绑定原理](https://github.com/qibing147147/learning-notes/tree/master/vue/双向绑定)
 - [webpack](https://github.com/qibing147147/learning-notes/tree/master/webpack)

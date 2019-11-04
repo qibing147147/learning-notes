@@ -10,13 +10,19 @@
 
 
 ```
-graph LR
-父beforeCreate-->父created
-父created-->父beforeMount
-父beforeMount-->子beforeCreate
-子beforeCreate-->子beforeMout
-子beforeMout-->子mounted
-子mounted-->父mounted
+创建和挂载阶段
+
+父beforeCreate-->父created-->父beforeMount
+-->子beforeCreate-->子beforeMout-->
+子beforeMout-->子mounted-->父mounted
 ```
 
+```
+组件更新阶段
+beforeUpdate-->updated
+```
 
+```
+组件销毁阶段
+父beforeDestroy-->子beforeDestroy-->子destroyed-->父destroyed
+```

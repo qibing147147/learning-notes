@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    div {
+      width: 400px;
+      height: 200px;
+    }
+    line {
+      stroke: #f00;
+      stroke-width: 2;
+    }
+    .first {
+      stroke-dasharray: 56,56;
+      stroke-dashoffset: 56;
+      animation: firstAni 0.5s linear forwards;
+    }
+    @keyframes firstAni {
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+    .second {
+      stroke-dasharray: 50,50;
+      stroke-dashoffset: 50;
+      animation: firstAni 0.5s 0.5s linear forwards;
+    }
+    .col {
+      stroke-dasharray: 173;
+      stroke-dashoffset: 173;
+    }
+    .third {
+      animation: firstAni 1s 1s linear forwards;
+
+    }
+    .row {
+      stroke-dasharray: 198;
+      stroke-dashoffset: 198;
+    }
+    .fourth {
+
+      animation: firstAni 1s 1s linear forwards;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <svg width="100%" height="100%" version="1.1" xmlns="http://www.w3.org/2000/svg">
+      <line class="first" x1="300" y1="200" x2="250" y2="175" />
+      <line class="second" x1="250" y1="175" x2="200" y2="175" />
+      <line class="third col" x1="200" y1="175" x2="200" y2="2" />
+      <line class="fourth row" x1="200" y1="2" x2="2" y2="2" />
+      <line class="third row" x1="200" y1="175" x2="2" y2="175" />
+      <line class="fourth col" x1="2" y1="175" x2="2" y2="2" />
+    </svg>
+  </div>
+</body>
+
+</html>
